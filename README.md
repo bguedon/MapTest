@@ -1,0 +1,1 @@
+Simple map activity using mapbox
