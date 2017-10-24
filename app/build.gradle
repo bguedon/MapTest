@@ -9,6 +9,7 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -28,9 +29,11 @@ dependencies {
     compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:5.2.0-beta.2@aar'){
         transitive=true
     }
+    compile 'com.google.android.gms:play-services:11.4.2'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+   compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:appcompat-v7:26.+'
     compile 'com.android.support:design:26.0.0-alpha1'
     testCompile 'junit:junit:4.12'

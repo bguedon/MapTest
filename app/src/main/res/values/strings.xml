@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MapTest</string>
+    <string name="permissions_missing_fine_location">Missing location permission</string>
 </resources>
