@@ -13,6 +13,12 @@
         mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets"
         mapbox:mapbox_cameraZoom="11"/>
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:src="@drawable/mapbox_marker_icon_default"/>
+
     <com.mapbox.services.android.ui.geocoder.GeocoderAutoCompleteView
         android:id="@+id/query"
         android:layout_width="match_parent"

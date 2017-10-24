@@ -68,6 +68,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                 mMapboxMap = mapboxMap;
                 mGoogleApiClient.connect();
 
+
             }
         });
 
@@ -105,7 +106,6 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                 mCurrentLocationMarker = mMapboxMap.addMarker(new MarkerOptions().setPosition(new LatLng(mCurrentLocation)));
             } else {
                 mCurrentLocationMarker.setPosition(new LatLng(mCurrentLocation));
-                mMapboxMap.updateMarker(mCurrentLocationMarker);
             }
             mMapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation), 16));
         }
