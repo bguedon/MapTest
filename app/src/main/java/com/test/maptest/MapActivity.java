@@ -10,9 +10,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -64,6 +67,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
 
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
+    private ActionBarDrawerToggle mDrawerToggle;
     private AddressesAdapter addressesAdapter;
 
     @Override
@@ -80,7 +84,15 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         addressesAdapter = new AddressesAdapter(this, getAddressHistory());
         mDrawerList.setAdapter(addressesAdapter);
         // Set the list's click listener
-        //mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Address address = ((Address) parent.getAdapter().getItem(position));
+                updateCurrentLocation(address.getLatitude(),address.getLongitude());
+                updateMapCenter();
+                mDrawerLayout.closeDrawers();
+            }
+        });
 
 
         // Create an instance of GoogleAPIClient.
