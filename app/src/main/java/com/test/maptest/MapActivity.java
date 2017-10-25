@@ -1,6 +1,7 @@
 package com.test.maptest;
 
 import android.Manifest;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -16,9 +17,9 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.mapbox.mapboxsdk.Mapbox;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -31,7 +32,10 @@ import com.mapbox.services.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.services.api.geocoding.v5.models.GeocodingResponse;
 import com.mapbox.services.commons.models.Position;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,6 +48,8 @@ import retrofit2.Response;
 public class MapActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "com.test.MapTest";
+
+    private static final String SP_KEY_ADDRESS_HISTORY = "com.test.MapTest.AddressHistory";
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
     private MapView mMapView;
@@ -77,7 +83,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         onCameraIdleListener = new MapboxMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
-                MapboxGeocoding reverseGeocode = new MapboxGeocoding.Builder()
+                final MapboxGeocoding reverseGeocode = new MapboxGeocoding.Builder()
                         .setAccessToken(Mapbox.getAccessToken())
                         .setCoordinates(Position.fromCoordinates(mMapboxMap.getCameraPosition().target.getLongitude(),mMapboxMap.getCameraPosition().target.getLatitude()))
                         .setGeocodingType(GeocodingCriteria.TYPE_ADDRESS)
@@ -95,6 +101,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                             autocomplete.cancelApiCall();
                             autocomplete.dismissDropDown();
                             hideKeyboard();
+                            saveAddressToHistory(new Address(address,results.get(0).getCenter()[1],results.get(0).getCenter()[0]));
                         } else {
                             // No result for your request were found.
                             Log.d(TAG, "onResponse: No result found");
@@ -145,13 +152,45 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         mCurrentLocation.reset();
         mCurrentLocation.setLatitude(latitude);
         mCurrentLocation.setLongitude(longitude);
-    }
+     }
 
     private void updateMapCenter() {
         if (mCurrentLocation != null) {
             mMapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation), 16));
             mMapboxMap.setZoom(16);
         }
+    }
+
+    private void saveAddressToHistory(Address address) {
+        SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
+        String addresses = sharedPreferences.getString(SP_KEY_ADDRESS_HISTORY, null);
+        ArrayList<Address> addressList;
+        Type addressListType = new TypeToken<ArrayList<Address>>() {
+        }.getType();
+
+        if (addresses == null) {
+            addressList = new ArrayList<Address>();
+        } else {
+            addressList = new Gson().fromJson(addresses, addressListType);
+        }
+
+        // discard already stored address, same latlong
+        for (int i = 0; i < addressList.size(); i++) {
+            Address item = addressList.get(i);
+            if (item.getLatitude() == address.getLatitude() && item.getLongitude() == address.getLongitude()) {
+               addressList.remove(i);
+                break;
+            }
+        }
+        // add item
+        addressList.add(0, address);
+        // keep 15 items max
+        if (addressList.size() > 15) {
+            addressList = new ArrayList<>(addressList.subList(0,15));
+        }
+         // store
+        sharedPreferences.edit().putString(SP_KEY_ADDRESS_HISTORY, new Gson().toJson(addressList,addressListType)).commit();
+        Log.d(TAG, "saved address, total " + addressList.size() + "\n" + address);
     }
 
     private void hideKeyboard() {
