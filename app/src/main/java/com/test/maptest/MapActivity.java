@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Layout;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -20,8 +19,6 @@ import com.google.android.gms.location.LocationServices;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -50,7 +47,6 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
     private MapView mMapView;
     private MapboxMap mMapboxMap;
-    private Marker mCurrentLocationMarker;
 
     GeocoderAutoCompleteView autocomplete;
     MapboxMap.OnCameraIdleListener onCameraIdleListener;
@@ -131,7 +127,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                 hideKeyboard();
                 Position position = feature.asPosition();
                 updateCurrentLocation(position.getLatitude(), position.getLongitude());
-                updateCurrentLocationMarker();
+                updateMapCenter();
             }
         });
 
@@ -149,13 +145,8 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         mCurrentLocation.setLongitude(longitude);
     }
 
-    private void updateCurrentLocationMarker() {
+    private void updateMapCenter() {
         if (mCurrentLocation != null) {
-            if (mCurrentLocationMarker == null) {
-                mCurrentLocationMarker = mMapboxMap.addMarker(new MarkerOptions().setPosition(new LatLng(mCurrentLocation)));
-            } else {
-                mCurrentLocationMarker.setPosition(new LatLng(mCurrentLocation));
-            }
             mMapboxMap.removeOnCameraIdleListener(onCameraIdleListener);
             mMapboxMap.setLatLng(new LatLng(mCurrentLocation));
             mMapboxMap.setZoom(16);
@@ -183,7 +174,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     updateLastknownLocation();
-                    updateCurrentLocationMarker();
+                    updateMapCenter();
 
                 } else {
 
@@ -243,7 +234,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     public void onConnected(@Nullable Bundle bundle) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             updateLastknownLocation();
-            updateCurrentLocationMarker();
+            updateMapCenter();
         } else {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
