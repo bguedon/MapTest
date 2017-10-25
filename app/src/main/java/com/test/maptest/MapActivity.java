@@ -19,6 +19,7 @@ import com.google.android.gms.location.LocationServices;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -111,6 +112,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
             @Override
             public void onMapReady(MapboxMap mapboxMap) {
                 mMapboxMap = mapboxMap;
+                mMapboxMap.addOnCameraIdleListener(onCameraIdleListener);
                 mGoogleApiClient.connect();
             }
         });
@@ -147,10 +149,8 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
 
     private void updateMapCenter() {
         if (mCurrentLocation != null) {
-            mMapboxMap.removeOnCameraIdleListener(onCameraIdleListener);
-            mMapboxMap.setLatLng(new LatLng(mCurrentLocation));
+            mMapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation), 16));
             mMapboxMap.setZoom(16);
-            mMapboxMap.addOnCameraIdleListener(onCameraIdleListener);
         }
     }
 
