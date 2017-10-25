@@ -9,9 +9,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -52,22 +55,33 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     private static final String SP_KEY_ADDRESS_HISTORY = "com.test.MapTest.AddressHistory";
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
-    private MapView mMapView;
-    private MapboxMap mMapboxMap;
-
     GeocoderAutoCompleteView autocomplete;
     MapboxMap.OnCameraIdleListener onCameraIdleListener;
-
-
+    private MapView mMapView;
+    private MapboxMap mMapboxMap;
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
 
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private AddressesAdapter addressesAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_map);
+
+        // init navigation drawer
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // Set the adapter for the list view
+        addressesAdapter = new AddressesAdapter(this, getAddressHistory());
+        mDrawerList.setAdapter(addressesAdapter);
+        // Set the list's click listener
+        //mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
 
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
@@ -85,7 +99,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
             public void onCameraIdle() {
                 final MapboxGeocoding reverseGeocode = new MapboxGeocoding.Builder()
                         .setAccessToken(Mapbox.getAccessToken())
-                        .setCoordinates(Position.fromCoordinates(mMapboxMap.getCameraPosition().target.getLongitude(),mMapboxMap.getCameraPosition().target.getLatitude()))
+                        .setCoordinates(Position.fromCoordinates(mMapboxMap.getCameraPosition().target.getLongitude(), mMapboxMap.getCameraPosition().target.getLatitude()))
                         .setGeocodingType(GeocodingCriteria.TYPE_ADDRESS)
                         .build();
                 reverseGeocode.enqueueCall(new Callback<GeocodingResponse>() {
@@ -94,14 +108,14 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                         List<CarmenFeature> results = response.body().getFeatures();
                         if (results.size() > 0) {
                             // TODO add parse method and check context size
-                            String address = (results.get(0).getAddress() != null ? results.get(0).getAddress() + " " :  "") + results.get(0).getText() + " " + results.get(0).getContext().get(0).getText() + " " + results.get(0).getContext().get(1).getText();
+                            String address = (results.get(0).getAddress() != null ? results.get(0).getAddress() + " " : "") + results.get(0).getText() + " " + results.get(0).getContext().get(0).getText() + " " + results.get(0).getContext().get(1).getText();
                             Log.d(TAG, "onResponse: " + address);
                             autocomplete.setText(address);
                             autocomplete.setSelection(address.length());
                             autocomplete.cancelApiCall();
                             autocomplete.dismissDropDown();
                             hideKeyboard();
-                            saveAddressToHistory(new Address(address,results.get(0).getCenter()[1],results.get(0).getCenter()[0]));
+                            saveAddressToHistory(new Address(address, results.get(0).getCenter()[1], results.get(0).getCenter()[0]));
                         } else {
                             // No result for your request were found.
                             Log.d(TAG, "onResponse: No result found");
@@ -142,7 +156,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
 
     }
 
-    @SuppressWarnings( {"MissingPermission"})
+    @SuppressWarnings({"MissingPermission"})
     private void updateLastknownLocation() {
         mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
@@ -152,12 +166,25 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         mCurrentLocation.reset();
         mCurrentLocation.setLatitude(latitude);
         mCurrentLocation.setLongitude(longitude);
-     }
+    }
 
     private void updateMapCenter() {
         if (mCurrentLocation != null) {
             mMapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation), 16));
             mMapboxMap.setZoom(16);
+        }
+    }
+
+    private ArrayList<Address> getAddressHistory() {
+
+        SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
+        String addresses = sharedPreferences.getString(SP_KEY_ADDRESS_HISTORY, null);
+        Type addressListType = new TypeToken<ArrayList<Address>>() {
+        }.getType();
+        if (addresses != null) {
+            return new Gson().fromJson(addresses, addressListType);
+        } else {
+            return new ArrayList<>();
         }
     }
 
@@ -178,7 +205,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         for (int i = 0; i < addressList.size(); i++) {
             Address item = addressList.get(i);
             if (item.getLatitude() == address.getLatitude() && item.getLongitude() == address.getLongitude()) {
-               addressList.remove(i);
+                addressList.remove(i);
                 break;
             }
         }
@@ -186,11 +213,16 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         addressList.add(0, address);
         // keep 15 items max
         if (addressList.size() > 15) {
-            addressList = new ArrayList<>(addressList.subList(0,15));
+            addressList = new ArrayList<>(addressList.subList(0, 15));
         }
-         // store
-        sharedPreferences.edit().putString(SP_KEY_ADDRESS_HISTORY, new Gson().toJson(addressList,addressListType)).commit();
+        // store
+        sharedPreferences.edit().putString(SP_KEY_ADDRESS_HISTORY, new Gson().toJson(addressList, addressListType)).commit();
         Log.d(TAG, "saved address, total " + addressList.size() + "\n" + address);
+
+        // refresh list adapter
+        addressesAdapter.clear();
+        addressesAdapter.addAll(addressList);
+        addressesAdapter.notifyDataSetChanged();
     }
 
     private void hideKeyboard() {
@@ -268,7 +300,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         mMapView.onSaveInstanceState(outState);
     }
 
-      // google api client callbacks
+    // google api client callbacks
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {

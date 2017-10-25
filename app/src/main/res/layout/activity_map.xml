@@ -1,41 +1,57 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical" android:layout_width="match_parent"
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <!-- The main content view -->
+    <RelativeLayout
+        xmlns:mapbox="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <com.mapbox.mapboxsdk.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="match_parent"
+        <com.mapbox.mapboxsdk.maps.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            mapbox:mapbox_cameraTargetLat="48.8588377"
+            mapbox:mapbox_cameraTargetLng="2.2770197"
+            mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets"
+            mapbox:mapbox_cameraZoom="11"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/mapbox_marker_icon_default"/>
+
+        <com.mapbox.services.android.ui.geocoder.GeocoderAutoCompleteView
+            android:id="@+id/query"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginEnd="18dp"
+            android:layout_marginRight="70dp"
+            android:layout_marginStart="18dp"
+            android:layout_marginLeft="18dp"
+            android:layout_marginTop="14dp"
+            android:background="@android:color/white"
+            android:elevation="12dp"
+            android:hint="@string/hint_enter_address"
+            android:padding="20dp"
+            android:maxLines="2"
+            android:textColor="@android:color/black"/>
+
+    </RelativeLayout>
+
+    <!-- The navigation drawer -->
+    <ListView android:id="@+id/left_drawer"
+        android:layout_width="240dp"
         android:layout_height="match_parent"
-        mapbox:mapbox_cameraTargetLat="48.8588377"
-        mapbox:mapbox_cameraTargetLng="2.2770197"
-        mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets"
-        mapbox:mapbox_cameraZoom="11"/>
-
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:src="@drawable/mapbox_marker_icon_default"/>
-
-    <com.mapbox.services.android.ui.geocoder.GeocoderAutoCompleteView
-        android:id="@+id/query"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginEnd="18dp"
-        android:layout_marginRight="70dp"
-        android:layout_marginStart="18dp"
-        android:layout_marginLeft="18dp"
-        android:layout_marginTop="14dp"
-        android:background="@android:color/white"
-        android:elevation="12dp"
-        android:hint="@string/hint_enter_address"
-        android:padding="20dp"
-        android:maxLines="2"
-        android:textColor="@android:color/black"/>
-
-</RelativeLayout>
+        android:layout_gravity="start"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp"
+        android:background="@android:color/white"/>
+</android.support.v4.widget.DrawerLayout>
